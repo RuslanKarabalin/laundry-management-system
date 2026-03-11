@@ -1,0 +1,27 @@
+@startuml database
+
+entity "appliance_types" {
+    * appliance_type_id : int <<PK>>
+    --
+    * name : varchar(31)
+}
+
+entity "appliances" {
+    * appliance_id : uuid <<PK>>
+    --
+    * name : varchar(31)
+    * appliance_type_id : int <<FK>>
+}
+
+entity "reservations" {
+    * reservation_id : uuid <<PK>>
+    --
+    * appliance_id : uuid <<FK>>
+    * user_id : varchar(255) <<FK>>
+    * duration : interval 
+}
+
+appliances ||--o{ appliance_types
+appliances ||--o{ reservations
+
+@enduml

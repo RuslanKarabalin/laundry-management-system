@@ -1,0 +1,61 @@
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/gofiber/contrib/fiberzap/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"gopkg.in/telebot.v4"
+)
+
+func main() {
+	logger, _ := zap.NewProduction()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Fatal("Can't sync logger after shutdown", zap.Error(err))
+		}
+	}()
+
+	sugar := logger.Sugar()
+
+	viper.SetDefault("APP_PORT", ":8080")
+	viper.SetDefault("TG_TOKEN", "")
+
+	// -------------
+	pref := telebot.Settings{
+		Token:  viper.GetString("TG_TOKEN"),
+		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
+	}
+
+	tg, err := telebot.NewBot(pref)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	tg.Handle("/hello", func(c telebot.Context) error {
+		return c.Send("Hello!")
+	})
+
+	tg.Start()
+
+	// -------------
+
+	app := fiber.New()
+
+	app.Use(fiberzap.New(fiberzap.Config{
+		Logger: logger,
+	}))
+
+	app.Get("/hello", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
+
+	addr := viper.GetString("APP_PORT")
+
+	sugar.Fatal(app.Listen(addr))
+	// -------------
+}
