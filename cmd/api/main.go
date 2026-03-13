@@ -21,12 +21,23 @@ func main() {
 
 	sugar := logger.Sugar()
 
+	viper.SetConfigType("env")
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
+		sugar.Fatal("Error reading config file, %s", err)
+	}
 	viper.SetDefault("APP_PORT", ":8080")
 	viper.SetDefault("TG_TOKEN", "")
 
+	tgToken := viper.GetString("TG_TOKEN")
+	addr := viper.GetString("APP_PORT")
+
+	sugar.Info(tgToken)
+	sugar.Info(addr)
+
 	// -------------
 	pref := telebot.Settings{
-		Token:  viper.GetString("TG_TOKEN"),
+		Token:  tgToken,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
 
@@ -53,8 +64,6 @@ func main() {
 	app.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
 	})
-
-	addr := viper.GetString("APP_PORT")
 
 	sugar.Fatal(app.Listen(addr))
 	// -------------
