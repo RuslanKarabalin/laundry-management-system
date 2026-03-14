@@ -1,0 +1,21 @@
+---
+# GitLab Registry
+gitlab_registry_server: registry.gitlab.com
+gitlab_registry_username: ""
+gitlab_registry_token: ""
+
+# Application
+app_name: laundry-backend
+image_repo: registry.gitlab.com/your-group/laundry-management-system
+image_tag: latest
+container_port: 8080
+
+# Staging
+staging_namespace: staging
+staging_replicas: 1
+staging_ingress_host: ""
+
+# Production
+production_namespace: production
+production_replicas: 2
+production_ingress_host: ""

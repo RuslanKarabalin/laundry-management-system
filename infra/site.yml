@@ -1,6 +1,6 @@
 ---
-- name: Deploy
+- name: Deploy k3s and configure cluster
   hosts: webservers
   become: true
   roles:
-    - web_db_role
+    - k3s_db_role

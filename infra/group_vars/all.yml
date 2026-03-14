@@ -1,1 +1,8 @@
 postgres_password: "your_secure_password"
+
+# GitLab Container Registry
+# Получить через: GitLab -> Settings -> Repository -> Deploy tokens
+# Зашифровать файл: ansible-vault encrypt group_vars/all.yml
+gitlab_registry_server: registry.gitlab.com
+gitlab_registry_username: "your_deploy_token_username"
+gitlab_registry_token: "your_deploy_token_value"

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ app_name }}
+  namespace: {{ namespace }}
+spec:
+  replicas: {{ replicas }}
+  selector:
+    matchLabels:
+      app: {{ app_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ app_name }}
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: {{ app_name }}
+          image: {{ image_repo }}:{{ image_tag }}
+          ports:
+            - containerPort: {{ container_port }}
+          env:
+            - name: APP_ENV
+              value: {{ namespace }}
+          envFrom:
+            - secretRef:
+                name: {{ app_name }}-env
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ app_name }}
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: {{ app_name }}
+  ports:
+    - port: 80
+      targetPort: {{ container_port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ app_name }}
+  namespace: {{ namespace }}
+spec:
+  ingressClassName: traefik
+  rules:
+{% if ingress_host %}
+    - host: {{ ingress_host }}
+      http:
+{% else %}
+    - http:
+{% endif %}
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ app_name }}
+                port:
+                  number: 80
