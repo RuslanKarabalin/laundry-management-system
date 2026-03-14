@@ -3,7 +3,7 @@ services:
     image: postgres:18
     container_name: pg_database
     env_file:
-      - ../.env
+      - .env
     ports:
       - 5432:5432
     networks:
@@ -17,9 +17,8 @@ services:
   backend:
     container_name: backend
     build:
-      context: ..
       dockerfile: Dockerfile
-    env_file: ../.env
+    env_file: .env
     ports:
       - 8080:8080
     depends_on:

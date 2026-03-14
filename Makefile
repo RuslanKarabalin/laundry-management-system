@@ -38,10 +38,10 @@ run:
 brun: build run
 
 up:
-	docker compose -f infra/docker-compose.yaml up -d --build
+	docker compose up -d --build
 
 down:
-	docker compose -f infra/docker-compose.yaml down --volumes
+	docker compose down --volumes
 
 ps:
-	docker compose -f infra/docker-compose.yaml ps -a
+	docker compose ps -a
