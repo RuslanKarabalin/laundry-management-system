@@ -36,3 +36,12 @@ run:
 	$(DBIN)/main
 
 brun: build run
+
+up:
+	docker compose -f infra/docker-compose.yaml up -d --build
+
+down:
+	docker compose -f infra/docker-compose.yaml down --volumes
+
+ps:
+	docker compose -f infra/docker-compose.yaml ps -a
