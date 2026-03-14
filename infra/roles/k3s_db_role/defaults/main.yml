@@ -4,6 +4,15 @@ gitlab_registry_server: registry.gitlab.com
 gitlab_registry_username: ""
 gitlab_registry_token: ""
 
+# PostgreSQL
+postgres_version: "18"
+postgres_user: laundry
+postgres_password: ""
+staging_db: laundry_staging
+production_db: laundry_production
+# CIDR сети подов k3s (по умолчанию)
+k3s_pod_cidr: "10.42.0.0/16"
+
 # Application
 app_name: laundry-backend
 image_repo: registry.gitlab.com/your-group/laundry-management-system

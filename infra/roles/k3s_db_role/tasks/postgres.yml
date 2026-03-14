@@ -1,0 +1,52 @@
+---
+- name: Install PostgreSQL
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+    update_cache: true
+
+- name: Ensure PostgreSQL is started and enabled
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Create database user
+  community.postgresql.postgresql_user:
+    name: "{{ postgres_user }}"
+    password: "{{ postgres_password }}"
+    state: present
+  become_user: postgres
+
+- name: Create databases
+  community.postgresql.postgresql_db:
+    name: "{{ item }}"
+    owner: "{{ postgres_user }}"
+    state: present
+  loop:
+    - "{{ staging_db }}"
+    - "{{ production_db }}"
+  become_user: postgres
+
+- name: Allow PostgreSQL connections from k3s pod network
+  community.postgresql.postgresql_pg_hba:
+    dest: /etc/postgresql/{{ postgres_version }}/main/pg_hba.conf
+    contype: host
+    databases: "{{ item }}"
+    users: "{{ postgres_user }}"
+    source: "{{ k3s_pod_cidr }}"
+    method: md5
+  loop:
+    - "{{ staging_db }}"
+    - "{{ production_db }}"
+  notify: Reload PostgreSQL
+
+- name: Configure PostgreSQL to listen on all interfaces
+  community.postgresql.postgresql_set:
+    name: listen_addresses
+    value: "*"
+  become_user: postgres
+  notify: Restart PostgreSQL

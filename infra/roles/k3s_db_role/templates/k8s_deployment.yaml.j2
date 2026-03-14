@@ -23,9 +23,19 @@ spec:
           env:
             - name: APP_ENV
               value: {{ namespace }}
-          envFrom:
-            - secretRef:
-                name: {{ app_name }}-env
+            - name: DB_HOST
+              value: {{ ansible_default_ipv4.address }}
+            - name: DB_PORT
+              value: "{{ postgres_port | default('5432') }}"
+            - name: DB_NAME
+              value: {{ db_name }}
+            - name: DB_USER
+              value: {{ postgres_user }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ app_name }}-env
+                  key: DB_PASSWORD
 ---
 apiVersion: v1
 kind: Service

@@ -1,4 +1,8 @@
+# PostgreSQL
 postgres_password: "your_secure_password"
+postgres_user: laundry
+staging_db: laundry_staging
+production_db: laundry_production
 
 # GitLab Container Registry
 # Получить через: GitLab -> Settings -> Repository -> Deploy tokens

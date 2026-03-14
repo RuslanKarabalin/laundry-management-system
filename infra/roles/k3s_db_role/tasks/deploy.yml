@@ -1,0 +1,28 @@
+---
+- name: Render staging manifest
+  ansible.builtin.template:
+    src: k8s_deployment.yaml.j2
+    dest: /tmp/{{ app_name }}-staging.yaml
+    mode: "0644"
+  vars:
+    namespace: "{{ staging_namespace }}"
+    replicas: "{{ staging_replicas }}"
+    ingress_host: "{{ staging_ingress_host }}"
+    db_name: "{{ staging_db }}"
+
+- name: Render production manifest
+  ansible.builtin.template:
+    src: k8s_deployment.yaml.j2
+    dest: /tmp/{{ app_name }}-production.yaml
+    mode: "0644"
+  vars:
+    namespace: "{{ production_namespace }}"
+    replicas: "{{ production_replicas }}"
+    ingress_host: "{{ production_ingress_host }}"
+    db_name: "{{ production_db }}"
+
+- name: Apply staging manifest
+  ansible.builtin.command: kubectl apply -f /tmp/{{ app_name }}-staging.yaml
+
+- name: Apply production manifest
+  ansible.builtin.command: kubectl apply -f /tmp/{{ app_name }}-production.yaml

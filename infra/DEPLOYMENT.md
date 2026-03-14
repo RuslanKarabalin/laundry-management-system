@@ -71,9 +71,11 @@ ansible-playbook site.yml -i inventory/hosts.yml --ask-vault-pass --ask-become-p
 
 1. Устанавливает k3s (одиночный node)
 2. Открывает порты через UFW (22, 80, 443, 6443)
-3. Создаёт namespace'ы `staging` и `production`
-4. Добавляет секрет `gitlab-registry` для pull образов в оба namespace'а
-5. Рендерит k8s-манифесты из шаблона и применяет их через `kubectl apply`
+3. Устанавливает PostgreSQL, создаёт пользователя и БД
+4. Разрешает подключения из сети подов k3s (`10.42.0.0/16`)
+5. Создаёт namespace'ы `staging` и `production`
+6. Добавляет секрет `gitlab-registry` для pull образов в оба namespace'а
+7. Рендерит k8s-манифесты из шаблона и применяет их через `kubectl apply`
 
 ---
 
