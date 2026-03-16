@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"laundry-management-system/internal/config"
 	"laundry-management-system/internal/db"
 	"log"
 	"os"
@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"gopkg.in/telebot.v4"
 )
@@ -29,32 +28,9 @@ func main() {
 
 	sugar := logger.Sugar()
 
-	viper.AutomaticEnv()
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
-	if err := viper.ReadInConfig(); err != nil {
-		sugar.Warn("Error reading config file, %s", err)
-	}
-	viper.SetDefault("APP_PORT", ":8080")
-	viper.SetDefault("TG_TOKEN", "")
+	cfg := config.ReadConfig(sugar)
 
-	tgToken := viper.GetString("TG_TOKEN")
-	addr := viper.GetString("APP_PORT")
-	pgUsername := viper.GetString("POSTGRES_USER")
-	pgPassword := viper.GetString("POSTGRES_PASSWORD")
-	pgHost := viper.GetString("POSTGRES_HOST")
-	pgPort := viper.GetString("POSTGRES_PORT")
-	pgBasename := viper.GetString("POSTGRES_DB")
-
-	pgUrl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		pgUsername,
-		pgPassword,
-		pgHost,
-		pgPort,
-		pgBasename,
-	)
-
-	conn, err := pgxpool.New(ctx, pgUrl)
+	conn, err := pgxpool.New(ctx, cfg.GetPostgresUrl())
 	if err != nil {
 		sugar.Error("Cannot connect to PostgreSQL", zap.Any("error", err))
 		os.Exit(1)
@@ -67,7 +43,7 @@ func main() {
 
 	// -------------
 	pref := telebot.Settings{
-		Token:  tgToken,
+		Token:  cfg.TgToken,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
 
@@ -113,6 +89,6 @@ func main() {
 		return c.SendString("Hello, World!")
 	})
 
-	sugar.Fatal(app.Listen(addr))
+	sugar.Fatal(app.Listen(cfg.Addr))
 	// -------------
 }
