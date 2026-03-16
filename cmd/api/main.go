@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"laundry-management-system/internal/db"
 	"log"
 	"os"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/pressly/goose/v3"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"gopkg.in/telebot.v4"
@@ -61,6 +63,10 @@ func main() {
 		os.Exit(1)
 	}
 	defer conn.Close()
+
+	goose.SetLogger(zap.NewStdLog(logger))
+
+	db.RunMigrations(conn)
 
 	// -------------
 	pref := telebot.Settings{
