@@ -54,9 +54,6 @@ func main() {
 		pgBasename,
 	)
 
-	sugar.Info(tgToken)
-	sugar.Info(addr)
-
 	conn, err := pgxpool.New(ctx, pgUrl)
 	if err != nil {
 		sugar.Error("Cannot connect to PostgreSQL", zap.Any("error", err))
