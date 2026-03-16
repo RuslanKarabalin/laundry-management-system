@@ -74,7 +74,8 @@ func main() {
 		return
 	}
 
-	tg.Handle("/hello", func(c telebot.Context) error {
+	tg.Handle("/start", func(c telebot.Context) error {
+		sugar.Infow("chat received", "tgUserId", c.Chat().ID)
 		return c.Send("Hello!")
 	})
 
@@ -82,7 +83,11 @@ func main() {
 
 	// -------------
 
-	app := fiber.New()
+	app := fiber.New(
+		fiber.Config{
+			DisableStartupMessage: true,
+		},
+	)
 
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
