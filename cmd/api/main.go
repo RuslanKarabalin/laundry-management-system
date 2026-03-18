@@ -4,6 +4,7 @@ import (
 	"context"
 	"laundry-management-system/internal/config"
 	"laundry-management-system/internal/db"
+	"laundry-management-system/internal/repository"
 	"log"
 	"os"
 	"time"
@@ -40,6 +41,8 @@ func main() {
 	goose.SetLogger(zap.NewStdLog(logger))
 
 	db.RunMigrations(conn)
+
+	r := repository.Init(conn)
 
 	// -------------
 	pref := telebot.Settings{
@@ -87,6 +90,22 @@ func main() {
 
 	app.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
+	})
+
+	app.Get("/appliances", func(c *fiber.Ctx) error {
+		appliances, err := r.GetAppliances(c.Context())
+		if err != nil {
+			return c.SendStatus(500)
+		}
+		return c.JSON(appliances)
+	})
+
+	app.Get("/reservations", func(c *fiber.Ctx) error {
+		reservations, err := r.GetReservations(c.Context())
+		if err != nil {
+			return c.SendStatus(500)
+		}
+		return c.JSON(reservations)
 	})
 
 	sugar.Fatal(app.Listen(cfg.Addr))

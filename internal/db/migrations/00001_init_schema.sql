@@ -14,7 +14,8 @@ create table reservations (
     reservation_id uuid primary key default gen_random_uuid(),
     appliance_id uuid not null,
     user_id varchar not null,
-    duration interval not null
+    start_time timestamptz not null default now(),
+    end_time timestamptz not null default now()
 );
 
 alter table reservations add constraint fk_reservations_appliances
