@@ -13,3 +13,9 @@ type Reservation struct {
 	StartTime   time.Time
 	EndTime     time.Time
 }
+
+type CreateReservation struct {
+	UserId    string    `json:"userId"`
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
+}

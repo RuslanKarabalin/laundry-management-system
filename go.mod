@@ -10,7 +10,6 @@ require (
 	github.com/pressly/goose/v3 v3.27.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.27.1
-	gopkg.in/telebot.v4 v4.0.0-beta.7
 )
 
 require (

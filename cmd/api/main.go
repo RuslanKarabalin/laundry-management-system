@@ -2,20 +2,23 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"laundry-management-system/internal/config"
 	"laundry-management-system/internal/db"
+	"laundry-management-system/internal/model"
 	"laundry-management-system/internal/repository"
-	"log"
 	"os"
-	"time"
 
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
-	"gopkg.in/telebot.v4"
 )
+
+//go:embed static/index.html
+var indexHTML []byte
 
 func main() {
 	ctx := context.Background()
@@ -44,27 +47,6 @@ func main() {
 
 	r := repository.Init(conn)
 
-	// -------------
-	pref := telebot.Settings{
-		Token:  cfg.TgToken,
-		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
-	}
-
-	tg, err := telebot.NewBot(pref)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	tg.Handle("/start", func(c telebot.Context) error {
-		sugar.Infow("chat received", "tgUserId", c.Chat().ID)
-		return c.Send("Hello!")
-	})
-
-	go tg.Start()
-
-	// -------------
-
 	app := fiber.New(
 		fiber.Config{
 			DisableStartupMessage: true,
@@ -88,16 +70,72 @@ func main() {
 		})
 	})
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
+		return c.Send(indexHTML)
+	})
+
 	app.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
 	})
 
 	app.Get("/appliances", func(c *fiber.Ctx) error {
-		appliances, err := r.GetAppliances(c.Context())
+		var appliances []*model.Appliance
+		var err error
+
+		applianceType := c.Query("type")
+
+		switch applianceType {
+		case "washing_machine":
+			appliances, err = r.GetWashingMachines(c.Context())
+		case "tumble_dryer":
+			appliances, err = r.GetTumbleDryers(c.Context())
+		default:
+			appliances, err = r.GetAppliances(c.Context())
+		}
 		if err != nil {
 			return c.SendStatus(500)
 		}
+
 		return c.JSON(appliances)
+	})
+
+	app.Get("/appliances/:id/reservations", func(c *fiber.Ctx) error {
+		applianceId := c.Params("id")
+
+		applianceUuid, err := uuid.Parse(applianceId)
+		if err != nil {
+			return c.SendStatus(fiber.ErrBadRequest.Code)
+		}
+
+		reservations, err := r.GetReservationsByApplianceId(c.Context(), applianceUuid)
+		if err != nil {
+			return c.SendStatus(500)
+		}
+
+		return c.JSON(reservations)
+	})
+
+	app.Post("/appliances/:id/reservations", func(c *fiber.Ctx) error {
+		applianceId := c.Params("id")
+
+		applianceUuid, err := uuid.Parse(applianceId)
+		if err != nil {
+			return c.SendStatus(fiber.ErrBadRequest.Code)
+		}
+
+		t := &model.CreateReservation{}
+
+		if err := c.BodyParser(t); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		}
+
+		err = r.CreateReservationsByApplianceId(c.Context(), applianceUuid, t)
+		if err != nil {
+			return c.SendStatus(500)
+		}
+
+		return c.SendStatus(fiber.StatusCreated)
 	})
 
 	app.Get("/reservations", func(c *fiber.Ctx) error {
@@ -109,5 +147,4 @@ func main() {
 	})
 
 	sugar.Fatal(app.Listen(cfg.Addr))
-	// -------------
 }

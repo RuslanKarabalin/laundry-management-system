@@ -10,7 +10,6 @@ import (
 type Config struct {
 	TgToken    string
 	Addr       string
-	Timezone   string
 	pgUsername string
 	pgPassword string
 	pgHost     string
@@ -31,7 +30,6 @@ func ReadConfig(s *zap.SugaredLogger) *Config {
 
 	cfg.TgToken = viper.GetString("TG_TOKEN")
 	cfg.Addr = viper.GetString("APP_PORT")
-	cfg.Timezone = viper.GetString("TZ")
 	cfg.pgUsername = viper.GetString("POSTGRES_USER")
 	cfg.pgPassword = viper.GetString("POSTGRES_PASSWORD")
 	cfg.pgHost = viper.GetString("POSTGRES_HOST")

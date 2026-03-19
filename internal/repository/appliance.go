@@ -30,3 +30,55 @@ func (r *Repository) GetAppliances(ctx context.Context) ([]*model.Appliance, err
 	}
 	return appliances, nil
 }
+
+func (r *Repository) GetWashingMachines(ctx context.Context) ([]*model.Appliance, error) {
+	query := `
+		select * from appliances
+		where type = 'washing_machine'
+	`
+
+	rows, err := r.pgPool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var appliances []*model.Appliance
+	for rows.Next() {
+		t := &model.Appliance{}
+		err := rows.Scan(
+			&t.Id, &t.Name, &t.Type,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan appliances: %w", err)
+		}
+		appliances = append(appliances, t)
+	}
+	return appliances, nil
+}
+
+func (r *Repository) GetTumbleDryers(ctx context.Context) ([]*model.Appliance, error) {
+	query := `
+		select * from appliances
+		where type = 'tumble_dryer'
+	`
+
+	rows, err := r.pgPool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var appliances []*model.Appliance
+	for rows.Next() {
+		t := &model.Appliance{}
+		err := rows.Scan(
+			&t.Id, &t.Name, &t.Type,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan appliances: %w", err)
+		}
+		appliances = append(appliances, t)
+	}
+	return appliances, nil
+}
