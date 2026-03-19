@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"laundry-management-system/internal/config"
 	"laundry-management-system/internal/db"
 	"laundry-management-system/internal/model"
@@ -17,8 +16,728 @@ import (
 	"go.uber.org/zap"
 )
 
-//go:embed static/index.html
-var indexHTML []byte
+var indexHTML string = `
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прачечная</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f4f4f8;
+            color: #1a1a2e;
+        }
+
+        header {
+            background: #1a1a2e;
+            color: white;
+            padding: 1.25rem 2rem;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.25rem;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: .75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #777;
+            margin-bottom: .875rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: .875rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .07);
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+        }
+
+        .card-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .reservations {
+            flex: 1;
+            font-size: .78rem;
+            color: #666;
+            min-height: 1.5rem;
+        }
+
+        .free {
+            color: #2a9d5c;
+            font-weight: 500;
+        }
+
+        .res-item {
+            padding: .2rem 0;
+            border-top: 1px solid #f0f0f0;
+            line-height: 1.4;
+        }
+
+        .res-item:first-child {
+            border-top: none;
+        }
+
+        .btn-book {
+            width: 100%;
+            padding: .6rem;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: .875rem;
+            font-weight: 500;
+            transition: background .15s;
+        }
+
+        .btn-book:hover {
+            background: #2e2e5a;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 1.75rem;
+            width: 100%;
+            max-width: 440px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+        }
+
+        .modal h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+        }
+
+        .field {
+            margin-bottom: 1.1rem;
+        }
+
+        .field label {
+            display: block;
+            font-size: .8rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: .35rem;
+        }
+
+        .field input[type="text"] {
+            width: 100%;
+            padding: .6rem .8rem;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: .95rem;
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        .field input[type="text"]:focus {
+            border-color: #1a1a2e;
+        }
+
+        .time-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: .5rem;
+        }
+
+        .slot-day {
+            width: 100%;
+            font-size: .7rem;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            padding: .25rem 0 .1rem;
+        }
+
+        .slot-gap {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            margin: 2px 0;
+            font-size: .68rem;
+            color: #bbb;
+        }
+
+        .slot-gap::before,
+        .slot-gap::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #eee;
+        }
+
+        .slot {
+            padding: .28rem .35rem;
+            min-width: 48px;
+            text-align: center;
+            font-size: .72rem;
+            font-weight: 500;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: border-color .1s, background .1s, color .1s;
+            user-select: none;
+        }
+
+        .slot:hover {
+            border-color: #1a1a2e;
+        }
+
+        .slot.sel-start,
+        .slot.sel-end {
+            background: #1a1a2e;
+            color: white;
+            border-color: #1a1a2e;
+        }
+
+        .slot.in-range {
+            background: #dde0f5;
+            border-color: #9a9fcf;
+            color: #1a1a2e;
+        }
+
+        .slot.hover-ok {
+            background: #eef0fa;
+            border-color: #b0b4e0;
+        }
+
+        .slot.hover-bad {
+            background: #fde8e8;
+            border-color: #f0a0a0;
+            color: #c0392b;
+        }
+
+        .time-hint {
+            font-size: .75rem;
+            color: #888;
+            margin-bottom: .5rem;
+            min-height: 1rem;
+        }
+
+        .time-hint strong {
+            color: #1a1a2e;
+        }
+
+        .dur-hint {
+            display: flex;
+            gap: .375rem;
+            flex-wrap: wrap;
+            margin-top: .3rem;
+        }
+
+        .dur-hint button {
+            padding: .25rem .6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: .75rem;
+            color: #555;
+            transition: border-color .15s, color .15s;
+        }
+
+        .dur-hint button:hover {
+            border-color: #1a1a2e;
+            color: #1a1a2e;
+        }
+
+        .modal-error {
+            font-size: .82rem;
+            color: #c0392b;
+            margin-bottom: .9rem;
+            min-height: 1.1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: .625rem;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: .7rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: .9rem;
+            font-weight: 600;
+            transition: background .15s;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-confirm {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #2e2e5a;
+        }
+
+        .btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: #1a1a2e;
+            color: white;
+            padding: .7rem 1.4rem;
+            border-radius: 8px;
+            font-size: .875rem;
+            opacity: 0;
+            transition: opacity .25s, transform .25s;
+            pointer-events: none;
+            z-index: 200;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Прачечная</h1>
+    </header>
+
+    <main>
+        <div class="section">
+            <div class="section-title">Стиральные машины</div>
+            <div class="grid" id="washing-machines"></div>
+        </div>
+        <div class="section">
+            <div class="section-title">Сушилки</div>
+            <div class="grid" id="tumble-dryers"></div>
+        </div>
+    </main>
+
+    <div class="overlay" id="overlay">
+        <div class="modal">
+            <h3 id="modal-title">Бронирование</h3>
+            <div class="field">
+                <label for="user-id">Имя или номер комнаты</label>
+                <input type="text" id="user-id" placeholder="Например: 42 или Иван" autocomplete="off" />
+            </div>
+            <div class="field">
+                <label>Время</label>
+                <div class="time-hint" id="time-hint">Выберите начало</div>
+                <div class="time-grid" id="time-grid"></div>
+                <div class="dur-hint">
+                    <button type="button" data-minutes="30">+30 мин</button>
+                    <button type="button" data-minutes="60">+1 ч</button>
+                    <button type="button" data-minutes="120">+2 ч</button>
+                    <button type="button" data-minutes="240">+4 ч</button>
+                </div>
+            </div>
+            <div class="modal-error" id="modal-error"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btn-cancel">Отмена</button>
+                <button class="btn-confirm" id="btn-confirm">Забронировать</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let selectedApplianceId = null;
+        let currentReservations = [];
+        let freeSlots = [];
+        let slotStart = null;
+        let slotEnd = null;
+
+        function buildFreeSlots() {
+            const now = new Date();
+            const base = new Date(now);
+            base.setSeconds(0, 0);
+            base.setMinutes(base.getMinutes() < 30 ? 0 : 30);
+
+            freeSlots = [];
+            for (let step = 0; step < 96 && freeSlots.length < 52; step++) {
+                const dt = new Date(base.getTime() + step * 30 * 60_000);
+                const dtEnd = new Date(dt.getTime() + 30 * 60_000);
+                const booked = currentReservations.some(r =>
+                    dt < new Date(r.EndTime) && dtEnd > new Date(r.StartTime)
+                );
+                if (!booked) freeSlots.push(dt);
+            }
+        }
+
+        function renderGrid() {
+            buildFreeSlots();
+            const grid = document.getElementById('time-grid');
+            grid.innerHTML = '';
+            slotStart = null;
+            slotEnd = null;
+
+            if (freeSlots.length === 0) {
+                const msg = document.createElement('div');
+                msg.style.cssText = 'font-size:.82rem;color:#999;padding:.4rem 0';
+                msg.textContent = 'Нет свободного времени в ближайшие 48 часов';
+                grid.appendChild(msg);
+                syncHint();
+                return;
+            }
+
+            let prevDt = null;
+            let prevDateStr = null;
+
+            freeSlots.forEach((dt, i) => {
+                const dateStr = dt.toLocaleDateString('ru', {
+                    weekday: 'short', day: 'numeric', month: 'short'
+                });
+
+                if (dateStr !== prevDateStr) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'slot-day';
+                    lbl.textContent = dateStr;
+                    grid.appendChild(lbl);
+                    prevDateStr = dateStr;
+                } else if (prevDt !== null && dt - prevDt > 30 * 60_000) {
+                    const gap = document.createElement('div');
+                    gap.className = 'slot-gap';
+                    gap.textContent = 'занято';
+                    grid.appendChild(gap);
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'slot';
+                btn.textContent = hhmm(dt);
+                btn.dataset.index = i;
+                btn.addEventListener('click', () => onSlotClick(i));
+                btn.addEventListener('mouseenter', () => onSlotHover(i));
+                btn.addEventListener('mouseleave', clearHover);
+                grid.appendChild(btn);
+
+                prevDt = dt;
+            });
+
+            syncHighlights();
+        }
+
+        function hhmm(dt) {
+            return String(dt.getHours()).padStart(2, '0') + ':' + String(dt.getMinutes()).padStart(2, '0');
+        }
+
+        function fmtDt(dt) {
+            const time = hhmm(dt);
+            if (dt.toDateString() === new Date().toDateString()) return time;
+            return dt.toLocaleDateString('ru', { day: 'numeric', month: 'short' }) + ' ' + time;
+        }
+
+        function hasGapBetween(from, to) {
+            for (let i = from; i < to - 1; i++) {
+                if (freeSlots[i + 1] - freeSlots[i] > 30 * 60_000) return true;
+            }
+            return false;
+        }
+
+        function onSlotClick(i) {
+            document.getElementById('modal-error').textContent = '';
+
+            if (slotStart === null || slotEnd !== null || i <= slotStart) {
+                slotStart = i;
+                slotEnd = null;
+            } else {
+                if (hasGapBetween(slotStart, i)) {
+                    document.getElementById('modal-error').textContent =
+                        'В диапазоне есть занятые слоты — выберите начало заново';
+                    slotStart = i;
+                    slotEnd = null;
+                } else {
+                    slotEnd = i;
+                }
+            }
+            syncHighlights();
+        }
+
+        function onSlotHover(i) {
+            if (slotStart !== null && slotEnd === null && i > slotStart)
+                syncHighlights(i);
+        }
+
+        function clearHover() {
+            if (slotStart !== null && slotEnd === null) syncHighlights(null);
+        }
+
+        function syncHighlights(hoverIdx = null) {
+            document.querySelectorAll('#time-grid .slot').forEach(btn => {
+                const i = parseInt(btn.dataset.index);
+                btn.classList.remove('sel-start', 'sel-end', 'in-range', 'hover-ok', 'hover-bad');
+
+                if (slotStart !== null && i === slotStart) btn.classList.add('sel-start');
+                if (slotEnd !== null && i === slotEnd - 1) btn.classList.add('sel-end');
+                if (slotStart !== null && slotEnd !== null && i > slotStart && i < slotEnd - 1)
+                    btn.classList.add('in-range');
+
+                if (slotStart !== null && slotEnd === null && hoverIdx !== null && i > slotStart && i < hoverIdx) {
+                    btn.classList.add(hasGapBetween(slotStart, hoverIdx) ? 'hover-bad' : 'hover-ok');
+                }
+            });
+            syncHint();
+        }
+
+        function syncHint() {
+            const el = document.getElementById('time-hint');
+            if (slotStart === null) {
+                el.innerHTML = 'Выберите начало';
+            } else if (slotEnd === null) {
+                el.innerHTML = 'Начало: <strong>' + fmtDt(freeSlots[slotStart]) + '</strong> — выберите конец';
+            } else {
+                el.innerHTML = '<strong>' + fmtDt(freeSlots[slotStart]) + '</strong> — <strong>' + fmtDt(freeSlots[slotEnd]) + '</strong>';
+            }
+        }
+
+        document.querySelectorAll('.dur-hint button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('modal-error').textContent = '';
+                if (slotStart === null) {
+                    document.getElementById('modal-error').textContent = 'Сначала выберите начало';
+                    return;
+                }
+                const targetEndTime = new Date(freeSlots[slotStart].getTime() + parseInt(btn.dataset.minutes) * 60_000);
+                const endIdx = freeSlots.findIndex(s => s.getTime() === targetEndTime.getTime());
+                if (endIdx === -1) {
+                    document.getElementById('modal-error').textContent = 'Нет свободного слота в это время';
+                    return;
+                }
+                if (hasGapBetween(slotStart, endIdx)) {
+                    document.getElementById('modal-error').textContent = 'В диапазоне есть занятые слоты';
+                    return;
+                }
+                slotEnd = endIdx;
+                syncHighlights();
+            });
+        });
+
+        async function load() {
+            const res = await fetch('/appliances');
+            const appliances = await res.json();
+            const washing = appliances.filter(a => a.Type === 'washing_machine');
+            const dryers = appliances.filter(a => a.Type === 'tumble_dryer');
+            await Promise.all([
+                renderGroup(washing, 'washing-machines'),
+                renderGroup(dryers, 'tumble-dryers'),
+            ]);
+        }
+
+        async function renderGroup(appliances, containerId) {
+            const container = document.getElementById(containerId);
+            await Promise.all(appliances.map(async a => {
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'card-name';
+                nameEl.textContent = a.Name;
+
+                const resEl = document.createElement('div');
+                resEl.className = 'reservations';
+                resEl.textContent = '...';
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-book';
+                btn.textContent = 'Забронировать';
+                btn.onclick = () => openModal(a.Id, a.Name);
+
+                card.append(nameEl, resEl, btn);
+                container.appendChild(card);
+                await fillReservations(a.Id, resEl);
+            }));
+        }
+
+        async function fillReservations(applianceId, el) {
+            try {
+                const res = await fetch('/appliances/' + applianceId + '/reservations');
+                const reservations = await res.json();
+                const now = new Date();
+                const upcoming = (reservations || [])
+                    .filter(r => new Date(r.EndTime) > now)
+                    .sort((a, b) => new Date(a.StartTime) - new Date(b.StartTime));
+
+                el.innerHTML = '';
+                if (upcoming.length === 0) {
+                    el.innerHTML = '<span class="free">Свободна</span>';
+                    return;
+                }
+                const today = new Date();
+                upcoming.slice(0, 4).forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'res-item';
+                    const start = new Date(r.StartTime);
+                    const end = new Date(r.EndTime);
+                    const fmtTime = dt => dt.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+                    const fmtDate = dt => dt.toLocaleDateString('ru', { day: 'numeric', month: 'short' });
+                    const startStr = start.toDateString() !== today.toDateString()
+                        ? fmtDate(start) + ' ' + fmtTime(start)
+                        : fmtTime(start);
+                    const endStr = end.toDateString() !== start.toDateString()
+                        ? fmtDate(end) + ' ' + fmtTime(end)
+                        : fmtTime(end);
+                    item.textContent = r.UserId + ': ' + startStr + '-' + endStr;
+                    el.appendChild(item);
+                });
+            } catch {
+                el.textContent = '';
+            }
+        }
+
+        async function openModal(id, name) {
+            selectedApplianceId = id;
+            document.getElementById('modal-title').textContent = name;
+            document.getElementById('user-id').value = '';
+            document.getElementById('modal-error').textContent = '';
+
+            try {
+                const res = await fetch('/appliances/' + id + '/reservations');
+                currentReservations = await res.json() || [];
+            } catch {
+                currentReservations = [];
+            }
+
+            renderGrid();
+            document.getElementById('overlay').classList.add('open');
+            document.getElementById('user-id').focus();
+        }
+
+        document.getElementById('btn-cancel').addEventListener('click', closeModal);
+        document.getElementById('overlay').addEventListener('click', e => {
+            if (e.target === document.getElementById('overlay')) closeModal();
+        });
+
+        function closeModal() {
+            document.getElementById('overlay').classList.remove('open');
+        }
+
+        document.getElementById('btn-confirm').addEventListener('click', async () => {
+            const userId = document.getElementById('user-id').value.trim();
+            const errorEl = document.getElementById('modal-error');
+            const confirmBtn = document.getElementById('btn-confirm');
+
+            errorEl.textContent = '';
+            if (!userId) { errorEl.textContent = 'Укажите имя или номер комнаты'; return; }
+            if (slotStart === null) { errorEl.textContent = 'Выберите начало времени'; return; }
+            if (slotEnd === null) { errorEl.textContent = 'Выберите конец времени'; return; }
+
+            const startTime = freeSlots[slotStart];
+            const endTime = freeSlots[slotEnd];
+
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Бронирую...';
+
+            try {
+                const res = await fetch('/appliances/' + selectedApplianceId + '/reservations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        startTime: startTime.toISOString(),
+                        endTime: endTime.toISOString(),
+                    }),
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    showToast('Успешно забронировано!');
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    errorEl.textContent = 'Ошибка при бронировании. Попробуйте снова.';
+                }
+            } catch {
+                errorEl.textContent = 'Нет соединения с сервером.';
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Забронировать';
+            }
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        load();
+    </script>
+</body>
+
+</html>
+`
 
 func main() {
 	ctx := context.Background()
@@ -72,7 +791,7 @@ func main() {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
-		return c.Send(indexHTML)
+		return c.Send([]byte(indexHTML))
 	})
 
 	app.Get("/hello", func(c *fiber.Ctx) error {
