@@ -8,13 +8,14 @@ import (
 )
 
 type Config struct {
-	TgToken    string
-	Addr       string
-	pgUsername string
-	pgPassword string
-	pgHost     string
-	pgPort     string
-	pgBasename string
+	TgToken      string
+	Addr         string
+	EraseJobCron string
+	pgUsername   string
+	pgPassword   string
+	pgHost       string
+	pgPort       string
+	pgBasename   string
 }
 
 func ReadConfig(s *zap.SugaredLogger) *Config {
@@ -30,6 +31,7 @@ func ReadConfig(s *zap.SugaredLogger) *Config {
 
 	cfg.TgToken = viper.GetString("TG_TOKEN")
 	cfg.Addr = viper.GetString("APP_PORT")
+	cfg.EraseJobCron = viper.GetString("ERASE_JOB_CRON")
 	cfg.pgUsername = viper.GetString("POSTGRES_USER")
 	cfg.pgPassword = viper.GetString("POSTGRES_PASSWORD")
 	cfg.pgHost = viper.GetString("POSTGRES_HOST")

@@ -18,7 +18,8 @@ entity "reservations" {
     --
     * appliance_id : uuid <<FK>>
     * user_id : varchar(255) <<FK>>
-    * duration : interval 
+    * start_time timestamptz
+    * end_time timestamptz
 }
 
 appliances ||--o{ appliance_types

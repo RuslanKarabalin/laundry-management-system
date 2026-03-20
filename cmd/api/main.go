@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
+	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
 
@@ -765,6 +766,27 @@ func main() {
 	db.RunMigrations(conn)
 
 	r := repository.Init(conn)
+
+	c := cron.New()
+
+	_, err = c.AddFunc(cfg.EraseJobCron, func() {
+		sugar.Info("Erase job execution started")
+		rowsAffected, err := r.DeleteOldReservations(ctx)
+		if err != nil {
+			sugar.Warn("Erase job execution failed")
+		} else {
+			sugar.Infow(
+				"Erase job execution ended successfully",
+				"rowsAffected", rowsAffected,
+			)
+		}
+	})
+	if err != nil {
+		sugar.Error("Cannot create erase job", zap.Any("error", err))
+		os.Exit(1)
+	}
+
+	c.Start()
 
 	app := fiber.New(
 		fiber.Config{
