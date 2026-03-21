@@ -8,7 +8,7 @@ import (
 
 func (r *Repository) GetAppliances(ctx context.Context) ([]*model.Appliance, error) {
 	query := `
-		select * from appliances
+		select appliance_id, name, type from appliances
 	`
 
 	rows, err := r.pgPool.Query(ctx, query)
@@ -28,12 +28,15 @@ func (r *Repository) GetAppliances(ctx context.Context) ([]*model.Appliance, err
 		}
 		appliances = append(appliances, t)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
 	return appliances, nil
 }
 
 func (r *Repository) GetWashingMachines(ctx context.Context) ([]*model.Appliance, error) {
 	query := `
-		select * from appliances
+		select appliance_id, name, type from appliances
 		where type = 'washing_machine'
 	`
 
@@ -54,12 +57,15 @@ func (r *Repository) GetWashingMachines(ctx context.Context) ([]*model.Appliance
 		}
 		appliances = append(appliances, t)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
 	return appliances, nil
 }
 
 func (r *Repository) GetTumbleDryers(ctx context.Context) ([]*model.Appliance, error) {
 	query := `
-		select * from appliances
+		select appliance_id, name, type from appliances
 		where type = 'tumble_dryer'
 	`
 
@@ -79,6 +85,9 @@ func (r *Repository) GetTumbleDryers(ctx context.Context) ([]*model.Appliance, e
 			return nil, fmt.Errorf("failed to scan appliances: %w", err)
 		}
 		appliances = append(appliances, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
 	return appliances, nil
 }

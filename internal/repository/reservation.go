@@ -30,6 +30,9 @@ func (r *Repository) GetReservations(ctx context.Context) ([]*model.Reservation,
 		}
 		reservations = append(reservations, t)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
 	return reservations, nil
 }
 
@@ -55,6 +58,9 @@ func (r *Repository) GetReservationsByApplianceId(ctx context.Context, appliance
 			return nil, fmt.Errorf("failed to scan reservations: %w", err)
 		}
 		reservations = append(reservations, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
 	return reservations, nil
 }

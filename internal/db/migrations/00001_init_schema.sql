@@ -25,3 +25,4 @@ on delete cascade;
 -- +goose Down
 drop table if exists reservations;
 drop table if exists appliances;
+drop type if exists appliance_type;

@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var indexHTML string = `
+const indexHTML string = `
 <!DOCTYPE html>
 <html lang="ru">
 
@@ -763,7 +763,11 @@ func main() {
 
 	goose.SetLogger(zap.NewStdLog(logger))
 
-	db.RunMigrations(conn)
+	err = db.RunMigrations(conn)
+	if err != nil {
+		sugar.Error("Cannot run migrations", zap.Any("error", err))
+		os.Exit(1)
+	}
 
 	r := repository.Init(conn)
 
@@ -814,10 +818,6 @@ func main() {
 	app.Get("/", func(c *fiber.Ctx) error {
 		c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
 		return c.Send([]byte(indexHTML))
-	})
-
-	app.Get("/hello", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
 	})
 
 	app.Get("/appliances", func(c *fiber.Ctx) error {

@@ -12,16 +12,20 @@ import (
 //go:embed migrations/*.sql
 var migrationsFs embed.FS
 
-func RunMigrations(conn *pgxpool.Pool) {
+func RunMigrations(conn *pgxpool.Pool) error {
 	goose.SetBaseFS(migrationsFs)
 	if err := goose.SetDialect(string(goose.DialectPostgres)); err != nil {
 		log.Fatalf("failed to set goose dialect: %v", err)
+		return err
 	}
 	db := stdlib.OpenDBFromPool(conn)
 	if err := goose.Up(db, "migrations"); err != nil {
 		log.Fatalf("failed to run migrations: %v", err)
+		return err
 	}
 	if err := db.Close(); err != nil {
 		log.Fatalf("failed to close database connection while migrations running: %v", err)
+		return err
 	}
+	return nil
 }
