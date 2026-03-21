@@ -756,7 +756,7 @@ func main() {
 
 	conn, err := pgxpool.New(ctx, cfg.GetPostgresUrl())
 	if err != nil {
-		sugar.Error("Cannot connect to PostgreSQL", zap.Any("error", err))
+		sugar.Errorw("Cannot connect to PostgreSQL", "error", err)
 		os.Exit(1)
 	}
 	defer conn.Close()
@@ -765,7 +765,7 @@ func main() {
 
 	err = db.RunMigrations(conn)
 	if err != nil {
-		sugar.Error("Cannot run migrations", zap.Any("error", err))
+		sugar.Errorw("Cannot run migrations", "error", err)
 		os.Exit(1)
 	}
 
@@ -786,7 +786,7 @@ func main() {
 		}
 	})
 	if err != nil {
-		sugar.Error("Cannot create erase job", zap.Any("error", err))
+		sugar.Errorw("Cannot create erase job", "error", err)
 		os.Exit(1)
 	}
 

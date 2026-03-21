@@ -25,7 +25,7 @@ func ReadConfig(s *zap.SugaredLogger) *Config {
 	viper.SetConfigFile(".env")
 
 	if err := viper.ReadInConfig(); err != nil {
-		s.Warn("Error reading config file, %s", err)
+		s.Warnw("Error reading config file", "error", err)
 	}
 
 	cfg.Addr = viper.GetString("APP_PORT")
